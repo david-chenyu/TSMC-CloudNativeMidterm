@@ -33,7 +33,21 @@ class MyStack extends cdk.Stack {
       minCapacity: 4,
       maxCapacity: 10,
     });
+    
+    // Configure the ALB listener and target group
+    const listener = alb.addListener('MyListener', {
+        port: 80,
+        open: true,
+        });
 
+    const targetGroup = listener.addTargets('MyTargetGroup', {
+        port: 80,
+        targets: [new ecs.EcsTarget(autoScalingGroup)],
+        });
+    
+    // Allow incoming traffic from the ALB to the ECS instances
+    autoScalingGroup.connections.allowFrom(alb, ec2.Port.tcp(80), 'ALB access');
+    
     // Elastic Container Registry
     const ecr = new ecs.Repository(this, 'MyEcr', {
       repositoryName: 'my-repo',
@@ -69,6 +83,5 @@ class MyStack extends cdk.Stack {
     // Allow the ECS instances to connect to the Redis cache
     autoScalingGroup.connections.allowToDefaultPort(redis);
 
-    // Create an ECS task definition that runs the Docker image from ECR
-    const taskDefinition = new ecs.TaskDefinition(this, 'MyTaskDefinition');
-    taskDefinition.add
+  }
+}
